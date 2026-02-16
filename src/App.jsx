@@ -1,45 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
-const KNOWN_PROGRAMS = {
-  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P": { name: "Pump.fun", color: "#00e599", icon: "🚀" },
-  "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": { name: "Raydium", color: "#5865F2", icon: "⚡" },
-  "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo": { name: "Meteora", color: "#E8A317", icon: "☄️" },
-  "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C": { name: "Raydium CPMM", color: "#5865F2", icon: "⚡" },
-  "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc": { name: "Orca", color: "#FFD700", icon: "🌊" },
-};
-
 const RISK_LEVELS = {
   good: { label: "Low Risk", color: "#00e599", bg: "rgba(0,229,153,0.1)", icon: "🟢" },
   warn: { label: "Medium Risk", color: "#E8A317", bg: "rgba(232,163,23,0.1)", icon: "🟡" },
   danger: { label: "High Risk", color: "#ff4757", bg: "rgba(255,71,87,0.1)", icon: "🔴" },
   unknown: { label: "Unknown", color: "#888", bg: "rgba(136,136,136,0.1)", icon: "⚪" },
 };
-
-function TypingText({ text, speed = 30 }) {
-  const [displayed, setDisplayed] = useState("");
-  useEffect(() => {
-    setDisplayed("");
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        setDisplayed(text.slice(0, i + 1));
-        i++;
-      } else clearInterval(interval);
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed]);
-  return <span>{displayed}</span>;
-}
-
-function PulsingDot({ color }) {
-  return (
-    <span style={{
-      display: "inline-block", width: 8, height: 8, borderRadius: "50%",
-      backgroundColor: color, marginRight: 8,
-      animation: "pulse 1.5s ease-in-out infinite",
-    }} />
-  );
-}
 
 function StatCard({ label, value, subValue, icon, color, delay = 0 }) {
   const [visible, setVisible] = useState(false);
@@ -58,49 +24,56 @@ function StatCard({ label, value, subValue, icon, color, delay = 0 }) {
       transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ fontSize: 12, color: "#666", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: "#666", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
             {label}
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: color || "#fff", fontFamily: "'Space Mono', monospace" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: color || "#fff", fontFamily: "'Space Mono', monospace", wordBreak: "break-all" }}>
             {value}
           </div>
           {subValue && (
-            <div style={{ fontSize: 12, color: "#555", marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ fontSize: 11, color: "#555", marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
               {subValue}
             </div>
           )}
         </div>
-        <div style={{ fontSize: 28, opacity: 0.6 }}>{icon}</div>
+        <div style={{ fontSize: 24, opacity: 0.6, marginLeft: 12, flexShrink: 0 }}>{icon}</div>
       </div>
     </div>
   );
 }
 
-function RiskBadge({ level, risks }) {
+function RiskBadge({ level, risks, score }) {
   const config = RISK_LEVELS[level] || RISK_LEVELS.unknown;
   return (
     <div style={{
       background: config.bg, border: `1px solid ${config.color}33`,
       borderRadius: 12, padding: "20px 24px",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: 22 }}>{config.icon}</span>
-        <span style={{ fontSize: 20, fontWeight: 700, color: config.color, fontFamily: "'Space Mono', monospace" }}>
-          {config.label}
-        </span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22 }}>{config.icon}</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: config.color, fontFamily: "'Space Mono', monospace" }}>
+            {config.label}
+          </span>
+        </div>
+        {score !== null && (
+          <span style={{ fontSize: 14, color: config.color, fontFamily: "'JetBrains Mono', monospace" }}>
+            Score: {score}/1000
+          </span>
+        )}
       </div>
       {risks && risks.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {risks.map((r, i) => (
             <div key={i} style={{
-              display: "flex", alignItems: "center", gap: 8,
-              fontSize: 13, color: "#999", fontFamily: "'JetBrains Mono', monospace",
+              display: "flex", alignItems: "flex-start", gap: 8,
+              fontSize: 12, color: "#999", fontFamily: "'JetBrains Mono', monospace",
             }}>
-              <span style={{ color: r.safe ? "#00e599" : "#ff4757", fontSize: 10 }}>
+              <span style={{ color: r.safe ? "#00e599" : "#ff4757", fontSize: 10, marginTop: 3, flexShrink: 0 }}>
                 {r.safe ? "✓" : "✗"}
               </span>
-              {r.label}
+              <span>{r.label}</span>
             </div>
           ))}
         </div>
@@ -109,33 +82,65 @@ function RiskBadge({ level, risks }) {
   );
 }
 
-function HolderBar({ rank, percentage, address }) {
+function HolderBar({ rank, percentage, address, isAmm, label }) {
+  const barColor = isAmm
+    ? "rgba(88,101,242,0.4), rgba(88,101,242,0.1)"
+    : "rgba(0,229,153,0.4), rgba(0,229,153,0.1)";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-      <span style={{ fontSize: 11, color: "#555", width: 24, textAlign: "right", fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+      <span style={{ fontSize: 11, color: "#555", width: 24, textAlign: "right", fontFamily: "'JetBrains Mono', monospace", flexShrink: 0 }}>
         #{rank}
       </span>
-      <div style={{ flex: 1, height: 18, background: "rgba(255,255,255,0.03)", borderRadius: 4, overflow: "hidden", position: "relative" }}>
+      <div style={{ flex: 1, height: 22, background: "rgba(255,255,255,0.03)", borderRadius: 4, overflow: "hidden", position: "relative" }}>
         <div style={{
           height: "100%", width: `${Math.min(percentage * 2, 100)}%`,
-          background: `linear-gradient(90deg, rgba(0,229,153,0.4), rgba(0,229,153,0.1))`,
+          background: `linear-gradient(90deg, ${barColor})`,
           borderRadius: 4, transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
         }} />
+        <div style={{
+          position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)",
+          display: "flex", alignItems: "center", gap: 6,
+        }}>
+          {label && (
+            <span style={{
+              fontSize: 9, color: isAmm ? "#5865F2" : "#00e599",
+              fontFamily: "'JetBrains Mono', monospace",
+              background: isAmm ? "rgba(88,101,242,0.15)" : "rgba(0,229,153,0.15)",
+              padding: "1px 5px", borderRadius: 3,
+            }}>
+              {label}
+            </span>
+          )}
+        </div>
         <span style={{
           position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-          fontSize: 10, color: "#666", fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 10, color: "#888", fontFamily: "'JetBrains Mono', monospace",
         }}>
           {percentage.toFixed(2)}%
         </span>
       </div>
-      <span style={{ fontSize: 10, color: "#444", fontFamily: "'JetBrains Mono', monospace", width: 80, overflow: "hidden", textOverflow: "ellipsis" }}>
+      <span style={{ fontSize: 10, color: "#444", fontFamily: "'JetBrains Mono', monospace", width: 90, overflow: "hidden", textOverflow: "ellipsis", flexShrink: 0 }}>
         {address}
       </span>
     </div>
   );
 }
 
-export default function SolanaTokenChecker() {
+function formatUsd(val) {
+  if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(2)}M`;
+  if (val >= 1_000) return `$${(val / 1_000).toFixed(2)}K`;
+  return `$${val.toFixed(2)}`;
+}
+
+function formatPrice(val) {
+  if (!val || val === 0) return "$0";
+  if (val < 0.000001) return `$${val.toExponential(2)}`;
+  if (val < 0.01) return `$${val.toFixed(8)}`;
+  if (val < 1) return `$${val.toFixed(4)}`;
+  return `$${val.toFixed(2)}`;
+}
+
+export default function LPScan() {
   const [ca, setCa] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -167,112 +172,115 @@ export default function SolanaTokenChecker() {
 
     try {
       await addScanLine("Connecting to Solana network...", 0);
-      await addScanLine(`Scanning token: ${addr.slice(0, 6)}...${addr.slice(-4)}`, 400);
+      await addScanLine(`Target: ${addr.slice(0, 8)}...${addr.slice(-6)}`, 300);
+      await addScanLine("Fetching full report from RugCheck...", 600);
 
-      // ── Fetch RugCheck data ──
-      await addScanLine("Fetching rug analysis from RugCheck...", 800);
-      let rugData = null;
+      let data = null;
       try {
-        const rugRes = await fetch(`https://api.rugcheck.xyz/v1/tokens/${addr}/report/summary`);
-        if (rugRes.ok) {
-          rugData = await rugRes.json();
+        const res = await fetch(`https://api.rugcheck.xyz/v1/tokens/${addr}/report`);
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          throw new Error(`RugCheck returned ${res.status}`);
         }
       } catch (e) {
-        console.warn("RugCheck fetch failed:", e);
+        console.error("RugCheck error:", e);
+        setError("Token not found or RugCheck API error. Check the CA and try again.");
+        setLoading(false);
+        return;
       }
 
+      await addScanLine("Parsing token metadata...", 900);
       await addScanLine("Analyzing holder distribution...", 1200);
-      await addScanLine("Checking launch platform...", 1600);
-      await addScanLine("Calculating fee metrics...", 2000);
-      await addScanLine("Compiling report...", 2400);
+      await addScanLine("Detecting launch platform...", 1500);
+      await addScanLine("Evaluating risk signals...", 1800);
 
-      // ── Parse RugCheck response ──
+      const tokenName = data.tokenMeta?.name || "Unknown";
+      const tokenSymbol = data.tokenMeta?.symbol || "???";
+      const price = data.price || 0;
+      const totalHolders = data.totalHolders || 0;
+      const totalLiquidity = data.totalMarketLiquidity || 0;
+      const rugged = data.rugged || false;
+
+      let launchPlatform = { name: "Unknown", color: "#888", icon: "❓" };
+      if (data.launchpad) {
+        const lp = data.launchpad;
+        const platform = (lp.platform || lp.name || "").toLowerCase();
+        if (platform.includes("pump")) {
+          launchPlatform = { name: lp.name || "Pump.fun", color: "#00e599", icon: "🚀" };
+        } else if (platform.includes("raydium")) {
+          launchPlatform = { name: lp.name || "Raydium", color: "#5865F2", icon: "⚡" };
+        } else if (platform.includes("meteora")) {
+          launchPlatform = { name: lp.name || "Meteora", color: "#E8A317", icon: "☄️" };
+        } else if (platform.includes("moonshot")) {
+          launchPlatform = { name: lp.name || "Moonshot", color: "#9b59b6", icon: "🌙" };
+        } else if (platform.includes("orca")) {
+          launchPlatform = { name: lp.name || "Orca", color: "#FFD700", icon: "🌊" };
+        } else {
+          launchPlatform = { name: lp.name || platform, color: "#888", icon: "📦" };
+        }
+      } else if (data.markets && data.markets.length > 0) {
+        for (const m of data.markets) {
+          const mt = (m.marketType || "").toLowerCase();
+          if (mt.includes("pump")) { launchPlatform = { name: "Pump.fun", color: "#00e599", icon: "🚀" }; break; }
+          if (mt.includes("raydium")) { launchPlatform = { name: "Raydium", color: "#5865F2", icon: "⚡" }; break; }
+          if (mt.includes("meteora")) { launchPlatform = { name: "Meteora", color: "#E8A317", icon: "☄️" }; break; }
+          if (mt.includes("orca")) { launchPlatform = { name: "Orca", color: "#FFD700", icon: "🌊" }; break; }
+        }
+      }
+
+      const score = data.score || 0;
       let riskLevel = "unknown";
+      if (rugged) riskLevel = "danger";
+      else if (score >= 500) riskLevel = "good";
+      else if (score >= 200) riskLevel = "warn";
+      else riskLevel = "danger";
+
       let risks = [];
-      let tokenName = addr.slice(0, 6) + "...";
-      let tokenSymbol = "???";
-      let launchPlatform = null;
-      let topHolders = [];
-      let totalMarkets = 0;
-
-      if (rugData) {
-        tokenName = rugData.tokenMeta?.name || tokenName;
-        tokenSymbol = rugData.tokenMeta?.symbol || tokenSymbol;
-
-        // Risk scoring
-        const score = rugData.score || 0;
-        if (score >= 800) riskLevel = "good";
-        else if (score >= 400) riskLevel = "warn";
-        else riskLevel = "danger";
-
-        // Risk flags
-        const riskEntries = rugData.risks || [];
-        risks = riskEntries.map(r => ({
+      if (data.risks && data.risks.length > 0) {
+        risks = data.risks.map(r => ({
           label: r.name || r.description || "Unknown risk",
           safe: r.level === "none" || r.level === "info",
         }));
-
-        if (risks.length === 0) {
-          risks = [
-            { label: "Mint authority: " + (rugData.mintAuthority ? "Enabled" : "Disabled"), safe: !rugData.mintAuthority },
-            { label: "Freeze authority: " + (rugData.freezeAuthority ? "Enabled" : "Disabled"), safe: !rugData.freezeAuthority },
-            { label: "Top 10 concentration check", safe: true },
-          ];
-        }
-
-        // Holder data from markets
-        totalMarkets = rugData.markets?.length || 0;
-
-        if (rugData.topHolders && rugData.topHolders.length > 0) {
-          topHolders = rugData.topHolders.slice(0, 10).map((h, i) => ({
-            rank: i + 1,
-            percentage: h.pct || 0,
-            address: h.owner || h.address || "unknown",
-          }));
-        }
-
-        // Detect launch platform from markets
-        if (rugData.markets) {
-          for (const market of rugData.markets) {
-            const programId = market.marketType || market.pubkey || "";
-            const lp = market.lp || {};
-            // Check various known identifiers
-            if (market.marketType) {
-              const mt = market.marketType.toLowerCase();
-              if (mt.includes("pump") || mt.includes("pumpfun")) {
-                launchPlatform = { name: "Pump.fun", color: "#00e599", icon: "🚀" };
-              } else if (mt.includes("raydium")) {
-                launchPlatform = { name: "Raydium", color: "#5865F2", icon: "⚡" };
-              } else if (mt.includes("meteora")) {
-                launchPlatform = { name: "Meteora", color: "#E8A317", icon: "☄️" };
-              } else if (mt.includes("orca")) {
-                launchPlatform = { name: "Orca", color: "#FFD700", icon: "🌊" };
-              }
-            }
-          }
-        }
-
-        if (!launchPlatform && rugData.creator) {
-          launchPlatform = { name: "Direct Deploy", color: "#888", icon: "📦" };
-        }
       }
+      risks.push({ label: `Mint authority: ${data.mintAuthority ? "Enabled" : "Disabled"}`, safe: !data.mintAuthority });
+      risks.push({ label: `Freeze authority: ${data.freezeAuthority ? "Enabled" : "Disabled"}`, safe: !data.freezeAuthority });
+      if (rugged) risks.unshift({ label: "TOKEN IS RUGGED", safe: false });
 
-      // Build result
-      setResult({
-        tokenName,
-        tokenSymbol,
-        address: addr,
-        rugScore: rugData?.score || null,
-        riskLevel,
-        risks,
-        topHolders,
-        launchPlatform: launchPlatform || { name: "Unknown", color: "#888", icon: "❓" },
-        totalMarkets,
-        fileMeta: rugData?.fileMeta || null,
-        supply: rugData?.tokenMeta?.supply || null,
+      const knownAccounts = data.knownAccounts || {};
+      const topHolders = (data.topHolders || []).slice(0, 10).map((h, i) => {
+        const ownerInfo = knownAccounts[h.owner] || knownAccounts[h.address] || null;
+        const isAmm = ownerInfo?.type === "AMM";
+        return {
+          rank: i + 1,
+          percentage: h.pct || 0,
+          address: h.owner || h.address || "unknown",
+          uiAmount: h.uiAmount || 0,
+          isAmm,
+          label: ownerInfo?.name || null,
+        };
       });
 
-      await addScanLine("✓ Scan complete.", 2800);
+      const nonAmmHolders = topHolders.filter(h => !h.isAmm);
+      const avgHoldingValue = nonAmmHolders.length > 0
+        ? nonAmmHolders.reduce((sum, h) => sum + (h.uiAmount * price), 0) / nonAmmHolders.length
+        : 0;
+      const totalTop10Pct = topHolders.reduce((s, h) => s + h.percentage, 0);
+      const nonAmmTop10Pct = nonAmmHolders.reduce((s, h) => s + h.percentage, 0);
+
+      const markets = (data.markets || []).map(m => ({
+        type: m.marketType || "unknown",
+        liquidity: (m.lp?.quoteUSD || 0) * 2,
+      }));
+
+      await addScanLine("✓ Scan complete.", 2100);
+
+      setResult({
+        tokenName, tokenSymbol, address: addr, price, totalHolders, totalLiquidity, rugged,
+        rugScore: score, riskLevel, risks, topHolders, nonAmmHolders, avgHoldingValue,
+        totalTop10Pct, nonAmmTop10Pct, launchPlatform, markets,
+        lpLockedPct: data.lpLockedPct || null,
+      });
     } catch (err) {
       console.error(err);
       setError("Failed to analyze token. Check the address and try again.");
@@ -295,18 +303,9 @@ export default function SolanaTokenChecker() {
 
       <style>{`
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         input::placeholder { color: #333; }
         input:focus { outline: none; }
@@ -316,13 +315,11 @@ export default function SolanaTokenChecker() {
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
       `}</style>
 
-      {/* Ambient background */}
       <div style={{
         position: "fixed", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
         background: "radial-gradient(ellipse at 20% 0%, rgba(0,229,153,0.03) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(88,101,242,0.03) 0%, transparent 60%)",
       }} />
 
-      {/* Scanline effect */}
       {loading && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, height: 2,
@@ -331,9 +328,7 @@ export default function SolanaTokenChecker() {
         }} />
       )}
 
-      {/* Content */}
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "60px 20px", position: "relative" }}>
-        {/* Header */}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 20px", position: "relative" }}>
         <div style={{ marginBottom: 48, textAlign: "center" }}>
           <div style={{ fontSize: 11, color: "#333", letterSpacing: 4, marginBottom: 12 }}>
             SOLANA TOKEN SCANNER
@@ -351,7 +346,6 @@ export default function SolanaTokenChecker() {
           </div>
         </div>
 
-        {/* Search */}
         <div style={{
           display: "flex", gap: 8, marginBottom: 32,
           background: "rgba(255,255,255,0.02)",
@@ -395,7 +389,6 @@ export default function SolanaTokenChecker() {
           </button>
         </div>
 
-        {/* Error */}
         {error && (
           <div style={{
             background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.2)",
@@ -406,7 +399,6 @@ export default function SolanaTokenChecker() {
           </div>
         )}
 
-        {/* Scan log */}
         {scanLines.length > 0 && (
           <div style={{
             background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: 16,
@@ -429,105 +421,160 @@ export default function SolanaTokenChecker() {
           </div>
         )}
 
-        {/* Results */}
         {result && (
           <div style={{ animation: "fadeInUp 0.5s ease forwards" }}>
-            {/* Token header */}
+            {result.rugged && (
+              <div style={{
+                background: "rgba(255,71,87,0.15)", border: "2px solid #ff4757",
+                borderRadius: 12, padding: "16px 20px", marginBottom: 16,
+                textAlign: "center", fontSize: 16, fontWeight: 700, color: "#ff4757",
+                fontFamily: "'Space Mono', monospace",
+              }}>
+                ⚠️ THIS TOKEN HAS BEEN RUGGED ⚠️
+              </div>
+            )}
+
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              marginBottom: 24, padding: "16px 20px",
+              marginBottom: 16, padding: "16px 20px",
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 12,
+              borderRadius: 12, flexWrap: "wrap", gap: 12,
             }}>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", fontFamily: "'Space Mono', monospace" }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", fontFamily: "'Space Mono', monospace" }}>
                   {result.tokenName}
                 </div>
                 <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>
                   ${result.tokenSymbol}
                 </div>
               </div>
-              <div style={{
-                fontSize: 11, color: "#444",
-                fontFamily: "'JetBrains Mono', monospace",
-                textAlign: "right",
-              }}>
-                <div>{result.address.slice(0, 8)}...{result.address.slice(-6)}</div>
-                <div style={{ marginTop: 4, color: "#333" }}>{result.totalMarkets} market{result.totalMarkets !== 1 ? "s" : ""} detected</div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#00e599", fontFamily: "'Space Mono', monospace" }}>
+                  {formatPrice(result.price)}
+                </div>
+                <div style={{ fontSize: 11, color: "#444", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                  {result.totalHolders.toLocaleString()} holders
+                </div>
               </div>
             </div>
 
-            {/* Stats grid */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-              <StatCard
-                label="Rug Score"
-                value={result.rugScore !== null ? `${result.rugScore}/1000` : "N/A"}
-                subValue={result.rugScore !== null ? (result.rugScore >= 800 ? "Looks clean" : result.rugScore >= 400 ? "Proceed with caution" : "High risk signals") : "Could not score"}
-                icon="🛡️"
-                color={RISK_LEVELS[result.riskLevel]?.color || "#888"}
-                delay={100}
-              />
               <StatCard
                 label="Launch Platform"
                 value={result.launchPlatform.name}
-                subValue={`Detected via market analysis`}
+                subValue={result.markets.length > 0 ? `${result.markets.length} pool${result.markets.length > 1 ? "s" : ""} active` : "No active pools"}
                 icon={result.launchPlatform.icon}
                 color={result.launchPlatform.color}
+                delay={100}
+              />
+              <StatCard
+                label="Total Liquidity"
+                value={formatUsd(result.totalLiquidity)}
+                subValue={result.lpLockedPct ? `${result.lpLockedPct.toFixed(1)}% LP locked` : "LP lock data N/A"}
+                icon="💧"
+                color="#5865F2"
                 delay={200}
               />
               <StatCard
                 label="Top 10 Concentration"
-                value={result.topHolders.length > 0
-                  ? `${result.topHolders.reduce((s, h) => s + h.percentage, 0).toFixed(1)}%`
-                  : "N/A"}
-                subValue={result.topHolders.length > 0 ? `Across ${result.topHolders.length} holders` : "No holder data"}
+                value={`${result.totalTop10Pct.toFixed(1)}%`}
+                subValue={`${result.nonAmmTop10Pct.toFixed(1)}% excl. AMM pools`}
                 icon="👥"
-                color="#5865F2"
+                color={result.nonAmmTop10Pct > 30 ? "#ff4757" : result.nonAmmTop10Pct > 15 ? "#E8A317" : "#00e599"}
                 delay={300}
               />
               <StatCard
-                label="Markets"
-                value={result.totalMarkets}
-                subValue="Active liquidity pools"
-                icon="💧"
+                label="Avg Top Holder Value"
+                value={result.avgHoldingValue > 0 ? formatUsd(result.avgHoldingValue) : "N/A"}
+                subValue={result.nonAmmHolders.length > 0 ? `Avg across ${result.nonAmmHolders.length} non-AMM holders` : "No holder data"}
+                icon="💰"
                 color="#E8A317"
                 delay={400}
               />
             </div>
 
-            {/* Rug Analysis */}
             <div style={{ marginBottom: 12 }}>
-              <RiskBadge level={result.riskLevel} risks={result.risks} />
+              <RiskBadge level={result.riskLevel} risks={result.risks} score={result.rugScore} />
             </div>
 
-            {/* Top holders */}
             {result.topHolders.length > 0 && (
               <div style={{
                 background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 12, padding: "20px 24px",
+                borderRadius: 12, padding: "20px 24px", marginBottom: 12,
+              }}>
+                <div style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  marginBottom: 16,
+                }}>
+                  <div style={{
+                    fontSize: 12, color: "#555", letterSpacing: 1.2, textTransform: "uppercase",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    Top Holder Distribution
+                  </div>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <span style={{ fontSize: 10, color: "#00e599", fontFamily: "'JetBrains Mono', monospace" }}>● Holder</span>
+                    <span style={{ fontSize: 10, color: "#5865F2", fontFamily: "'JetBrains Mono', monospace" }}>● AMM/Pool</span>
+                  </div>
+                </div>
+                {result.topHolders.map((h) => (
+                  <HolderBar
+                    key={h.rank}
+                    rank={h.rank}
+                    percentage={h.percentage}
+                    address={h.address.slice(0, 6) + "..." + h.address.slice(-4)}
+                    isAmm={h.isAmm}
+                    label={h.label}
+                  />
+                ))}
+                <div style={{
+                  marginTop: 12, padding: "10px 12px",
+                  background: "rgba(255,255,255,0.02)", borderRadius: 8,
+                  fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace",
+                  display: "flex", justifyContent: "space-between",
+                }}>
+                  <span>Top 10 total: {result.totalTop10Pct.toFixed(2)}%</span>
+                  <span>Wallets only: {result.nonAmmTop10Pct.toFixed(2)}%</span>
+                </div>
+              </div>
+            )}
+
+            {result.markets.length > 0 && (
+              <div style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 12, padding: "16px 24px", marginBottom: 12,
               }}>
                 <div style={{
                   fontSize: 12, color: "#555", letterSpacing: 1.2, textTransform: "uppercase",
-                  marginBottom: 16, fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'JetBrains Mono', monospace", marginBottom: 12,
                 }}>
-                  Top Holder Distribution
+                  Active Markets
                 </div>
-                {result.topHolders.map((h) => (
-                  <HolderBar key={h.rank} rank={h.rank} percentage={h.percentage} address={h.address.slice(0, 8) + "..."} />
+                {result.markets.map((m, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "8px 0", borderBottom: i < result.markets.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  }}>
+                    <span style={{ fontSize: 12, color: "#888", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {m.type.replace(/_/g, " ")}
+                    </span>
+                    <span style={{ fontSize: 12, color: "#00e599", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {formatUsd(m.liquidity)}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
 
-            {/* Footer links */}
-            <div style={{
-              display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap",
-            }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {[
                 { label: "RugCheck", url: `https://rugcheck.xyz/tokens/${result.address}` },
-                { label: "Birdeye", url: `https://birdeye.so/token/${result.address}` },
+                { label: "Birdeye", url: `https://birdeye.so/token/${result.address}?chain=solana` },
                 { label: "Solscan", url: `https://solscan.io/token/${result.address}` },
+                { label: "DexScreener", url: `https://dexscreener.com/solana/${result.address}` },
               ].map((link) => (
                 <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" style={{
                   fontSize: 11, color: "#444", textDecoration: "none",
@@ -544,7 +591,6 @@ export default function SolanaTokenChecker() {
           </div>
         )}
 
-        {/* Empty state */}
         {!result && !loading && !error && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.2 }}>◎</div>
@@ -552,7 +598,7 @@ export default function SolanaTokenChecker() {
               Paste a Solana token CA above to scan
             </div>
             <div style={{ fontSize: 11, color: "#222", marginTop: 8 }}>
-              Powered by RugCheck · Solana RPC
+              Powered by RugCheck API
             </div>
           </div>
         )}
