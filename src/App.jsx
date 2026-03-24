@@ -84,7 +84,7 @@ function RiskBadge({ level, risks, score }) {
 
 function HolderBar({ rank, percentage, address, isAmm, label }) {
   const barColor = isAmm
-    ? "rgba(88,101,242,0.4), rgba(88,101,242,0.1)"
+    ? "rgba(232,163,23,0.4), rgba(232,163,23,0.1)"
     : "rgba(0,229,153,0.4), rgba(0,229,153,0.1)";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -103,9 +103,9 @@ function HolderBar({ rank, percentage, address, isAmm, label }) {
         }}>
           {label && (
             <span style={{
-              fontSize: 9, color: isAmm ? "#5865F2" : "#00e599",
+              fontSize: 9, color: isAmm ? "#E8A317" : "#00e599",
               fontFamily: "'JetBrains Mono', monospace",
-              background: isAmm ? "rgba(88,101,242,0.15)" : "rgba(0,229,153,0.15)",
+              background: isAmm ? "rgba(232,163,23,0.15)" : "rgba(0,229,153,0.15)",
               padding: "1px 5px", borderRadius: 3,
             }}>
               {label}
@@ -248,25 +248,30 @@ export default function LPScan() {
       if (rugged) risks.unshift({ label: "TOKEN IS RUGGED", safe: false });
 
       const knownAccounts = data.knownAccounts || {};
-      const topHolders = (data.topHolders || []).slice(0, 10).map((h, i) => {
+      const allHolders = (data.topHolders || []).map((h) => {
         const ownerInfo = knownAccounts[h.owner] || knownAccounts[h.address] || null;
         const isAmm = ownerInfo?.type === "AMM";
+        const isCreator = ownerInfo?.type === "CREATOR";
         return {
-          rank: i + 1,
           percentage: h.pct || 0,
           address: h.owner || h.address || "unknown",
           uiAmount: h.uiAmount || 0,
           isAmm,
-          label: ownerInfo?.name || null,
+          isCreator,
+          label: isCreator ? "Creator" : (ownerInfo?.name || null),
         };
       });
 
-      const nonAmmHolders = topHolders.filter(h => !h.isAmm);
-      const avgHoldingValue = nonAmmHolders.length > 0
-        ? nonAmmHolders.reduce((sum, h) => sum + (h.uiAmount * price), 0) / nonAmmHolders.length
+      // Filter out AMM/pool accounts, only show real wallets
+      const topHolders = allHolders
+        .filter(h => !h.isAmm)
+        .slice(0, 10)
+        .map((h, i) => ({ ...h, rank: i + 1 }));
+
+      const avgHoldingValue = topHolders.length > 0
+        ? topHolders.reduce((sum, h) => sum + (h.uiAmount * price), 0) / topHolders.length
         : 0;
       const totalTop10Pct = topHolders.reduce((s, h) => s + h.percentage, 0);
-      const nonAmmTop10Pct = nonAmmHolders.reduce((s, h) => s + h.percentage, 0);
 
       const markets = (data.markets || []).map(m => ({
         type: m.marketType || "unknown",
@@ -277,8 +282,8 @@ export default function LPScan() {
 
       setResult({
         tokenName, tokenSymbol, address: addr, price, totalHolders, totalLiquidity, rugged,
-        rugScore: score, riskLevel, risks, topHolders, nonAmmHolders, avgHoldingValue,
-        totalTop10Pct, nonAmmTop10Pct, launchPlatform, markets,
+        rugScore: score, riskLevel, risks, topHolders, avgHoldingValue,
+        totalTop10Pct, launchPlatform, markets,
         lpLockedPct: data.lpLockedPct || null,
       });
     } catch (err) {
@@ -479,15 +484,15 @@ export default function LPScan() {
               <StatCard
                 label="Top 10 Concentration"
                 value={`${result.totalTop10Pct.toFixed(1)}%`}
-                subValue={`${result.nonAmmTop10Pct.toFixed(1)}% excl. AMM pools`}
+                subValue="Excluding AMM/pool accounts"
                 icon="👥"
-                color={result.nonAmmTop10Pct > 30 ? "#ff4757" : result.nonAmmTop10Pct > 15 ? "#E8A317" : "#00e599"}
+                color={result.totalTop10Pct > 30 ? "#ff4757" : result.totalTop10Pct > 15 ? "#E8A317" : "#00e599"}
                 delay={300}
               />
               <StatCard
                 label="Avg Top Holder Value"
                 value={result.avgHoldingValue > 0 ? formatUsd(result.avgHoldingValue) : "N/A"}
-                subValue={result.nonAmmHolders.length > 0 ? `Avg across ${result.nonAmmHolders.length} non-AMM holders` : "No holder data"}
+                subValue={result.topHolders.length > 0 ? `Avg across ${result.topHolders.length} wallets` : "No holder data"}
                 icon="💰"
                 color="#E8A317"
                 delay={400}
@@ -514,10 +519,7 @@ export default function LPScan() {
                   }}>
                     Top Holder Distribution
                   </div>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <span style={{ fontSize: 10, color: "#00e599", fontFamily: "'JetBrains Mono', monospace" }}>● Holder</span>
-                    <span style={{ fontSize: 10, color: "#5865F2", fontFamily: "'JetBrains Mono', monospace" }}>● AMM/Pool</span>
-                  </div>
+                  <span style={{ fontSize: 10, color: "#555", fontFamily: "'JetBrains Mono', monospace" }}>excl. AMM/pools</span>
                 </div>
                 {result.topHolders.map((h) => (
                   <HolderBar
@@ -525,7 +527,7 @@ export default function LPScan() {
                     rank={h.rank}
                     percentage={h.percentage}
                     address={h.address.slice(0, 6) + "..." + h.address.slice(-4)}
-                    isAmm={h.isAmm}
+                    isAmm={h.isCreator}
                     label={h.label}
                   />
                 ))}
@@ -535,8 +537,7 @@ export default function LPScan() {
                   fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', monospace",
                   display: "flex", justifyContent: "space-between",
                 }}>
-                  <span>Top 10 total: {result.totalTop10Pct.toFixed(2)}%</span>
-                  <span>Wallets only: {result.nonAmmTop10Pct.toFixed(2)}%</span>
+                  <span>Top 10 wallets: {result.totalTop10Pct.toFixed(2)}%</span>
                 </div>
               </div>
             )}
